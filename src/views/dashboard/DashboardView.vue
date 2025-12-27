@@ -88,8 +88,9 @@
     <!-- Quick Actions -->
     <div class="mb-8">
       <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <router-link to="/categories/create"
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Add Category -->
+        <router-link to="/dashboard/categories/create"
           class="flex items-center p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
           <div class="p-2 bg-blue-100 rounded-lg mr-4">
             <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,7 +103,8 @@
           </div>
         </router-link>
 
-        <router-link to="/menu-items/create"
+        <!-- Add Menu Item -->
+        <router-link to="/dashboard/menu-items/create"
           class="flex items-center p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
           <div class="p-2 bg-green-100 rounded-lg mr-4">
             <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,7 +117,8 @@
           </div>
         </router-link>
 
-        <router-link to="/categories"
+        <!-- View Categories -->
+        <router-link to="/dashboard/categories"
           class="flex items-center p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
           <div class="p-2 bg-purple-100 rounded-lg mr-4">
             <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -126,6 +129,21 @@
           <div>
             <h3 class="font-medium text-gray-900">View Categories</h3>
             <p class="text-sm text-gray-500">Manage all categories</p>
+          </div>
+        </router-link>
+
+        <!-- View Menu Items -->
+        <router-link to="/dashboard/menu-items"
+          class="flex items-center p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
+          <div class="p-2 bg-orange-100 rounded-lg mr-4">
+            <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="font-medium text-gray-900">View Menu Items</h3>
+            <p class="text-sm text-gray-500">Manage all menu items</p>
           </div>
         </router-link>
       </div>

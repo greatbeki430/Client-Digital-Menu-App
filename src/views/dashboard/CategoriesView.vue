@@ -6,7 +6,8 @@
         <h1 class="text-3xl font-bold text-gray-900">Menu Categories</h1>
         <p class="text-gray-600 mt-2">Manage your restaurant menu categories</p>
       </div>
-      <router-link to="/categories/create">
+      <!-- Fixed: Added /dashboard prefix -->
+      <router-link to="/dashboard/categories/create">
         <BaseButton variant="primary">
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -30,7 +31,8 @@
     <!-- Empty -->
     <div v-else-if="categoryStore.categories.length === 0" class="text-center py-12">
       <h3 class="mt-4 text-lg font-medium text-gray-900">No categories yet</h3>
-      <router-link to="/categories/create" class="btn-primary mt-4 inline-flex items-center">
+      <!-- Fixed: Added /dashboard prefix -->
+      <router-link to="/dashboard/categories/create" class="btn-primary mt-4 inline-flex items-center">
         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
@@ -55,7 +57,8 @@
           <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ category.name }}</h3>
           <p class="text-gray-600 mb-4">{{ category.description || 'No description provided' }}</p>
           <div class="flex justify-end space-x-2">
-            <router-link :to="`/categories/${category.id}/edit`">
+            <!-- Fixed: Added /dashboard prefix -->
+            <router-link :to="`/dashboard/categories/${category.id}/edit`">
               <BaseButton variant="secondary" size="sm">Edit</BaseButton>
             </router-link>
             <BaseButton @click="deleteCategory(category.id)" variant="danger" size="sm"
@@ -95,3 +98,9 @@ const deleteCategory = async (id: number) => {
   }
 }
 </script>
+
+<style scoped>
+.btn-primary {
+  @apply px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500;
+}
+</style>

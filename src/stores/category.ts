@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { Category, CategoriesResponse } from '@/types/category'
+import type { Category, CategoriesResponse, CategoryFormData } from '@/types/category'
 import type { ApiResponse } from '@/types/auth'
 import categoryService from '@/services/categoryService'
+import theMealDbService from '@/services/theMealDbService'
 
 export const useCategoryStore = defineStore('category', () => {
   // State
@@ -21,7 +22,9 @@ export const useCategoryStore = defineStore('category', () => {
   const totalCategories = computed(() => categories.value.length)
 
   // Helper function to prepare data
-  function prepareCategoryData(data: FormData | { name: string; description?: string; image?: File | string }): FormData | { name: string; description?: string; image?: string } {
+  function prepareCategoryData(
+    data: FormData | { name: string; description?: string; image?: File | string },
+  ): CategoryFormData | FormData {
     if (data instanceof FormData) {
       return data
     }
@@ -29,7 +32,7 @@ export const useCategoryStore = defineStore('category', () => {
     return {
       name: data.name,
       description: data.description,
-      image: typeof data.image === 'string' ? data.image : undefined
+      image: typeof data.image === 'string' ? data.image : undefined,
     }
   }
 
@@ -41,9 +44,35 @@ export const useCategoryStore = defineStore('category', () => {
 
       const response = await categoryService.getAll(page)
 
-      if (!response.success) {
-        throw new Error(response.message)
-      }
+      // if (!response.success) {
+      //   throw new Error(response.message)
+      // }
+
+       if (!response.success) {
+         // If real API fails, try TheMealDB
+         console.warn('Real API failed, trying TheMealDB...')
+         const fallbackResponse = await theMealDbService.getAll(page)
+         if (fallbackResponse.success && fallbackResponse.data) {
+           categories.value = fallbackResponse.data.data
+           pagination.value = {
+             current_page: fallbackResponse.data.meta.current_page,
+             last_page: fallbackResponse.data.meta.last_page,
+             per_page: fallbackResponse.data.meta.per_page,
+             total: fallbackResponse.data.meta.total,
+           }
+         }
+         return fallbackResponse
+       }
+
+      // if (response.data) {
+      //   categories.value = response.data.data
+      //   pagination.value = {
+      //     current_page: response.data.meta.current_page,
+      //     last_page: response.data.meta.last_page,
+      //     per_page: response.data.meta.per_page,
+      //     total: response.data.meta.total,
+      //   }
+      // }
 
       if (response.data) {
         categories.value = response.data.data
@@ -101,7 +130,7 @@ export const useCategoryStore = defineStore('category', () => {
   }
 
   async function createCategory(
-    data: FormData | { name: string; description?: string; image?: File | string }
+    data: FormData | { name: string; description?: string; image?: File | string },
   ): Promise<ApiResponse<Category>> {
     try {
       loading.value = true
@@ -111,7 +140,7 @@ export const useCategoryStore = defineStore('category', () => {
       const preparedData = prepareCategoryData(data)
 
       // Handle FormData creation for file upload
-      let requestData: FormData | { name: string; description?: string; image?: string }
+      let requestData: CategoryFormData | FormData
 
       if (preparedData instanceof FormData) {
         requestData = preparedData
@@ -154,7 +183,7 @@ export const useCategoryStore = defineStore('category', () => {
 
   async function updateCategory(
     id: number,
-    data: FormData | { name: string; description?: string; image?: File | string }
+    data: FormData | { name: string; description?: string; image?: File | string },
   ): Promise<ApiResponse<Category>> {
     try {
       loading.value = true
@@ -164,7 +193,7 @@ export const useCategoryStore = defineStore('category', () => {
       const preparedData = prepareCategoryData(data)
 
       // Handle FormData creation for file upload
-      let requestData: FormData | { name: string; description?: string; image?: string }
+      let requestData: CategoryFormData | FormData
 
       if (preparedData instanceof FormData) {
         requestData = preparedData

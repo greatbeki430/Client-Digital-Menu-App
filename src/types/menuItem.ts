@@ -8,7 +8,7 @@ export interface MenuItem {
   price: number
   tax_percentage: number
   discount?: number
-  photo?: string | null // <-- allow null
+  photo?: string | null
   created_at: string
   updated_at: string
   category?: Category
@@ -20,7 +20,9 @@ export interface MenuItemFormData {
   price: number | string
   tax_percentage: number | string
   discount?: number | string
-  photo?: File | string
+  // photo?: File | string
+  photo?: File | string | null
+  business_id?: number | string
 }
 
 // export interface MenuItemsResponse extends PaginatedResponse<MenuItem> {}

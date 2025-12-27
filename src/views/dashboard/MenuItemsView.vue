@@ -7,7 +7,8 @@
           <h1 class="text-3xl font-bold text-gray-900">Menu Items</h1>
           <p class="text-gray-600 mt-2">Manage your restaurant menu items</p>
         </div>
-        <router-link to="/menu-items/create">
+        <!-- Fixed: Added /dashboard prefix -->
+        <router-link to="/dashboard/menu-items/create">
           <BaseButton variant="primary">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -52,7 +53,8 @@
       <h3 class="mt-4 text-lg font-medium text-gray-900">No menu items yet</h3>
       <p class="mt-1 text-gray-500">Get started by creating your first menu item.</p>
       <div class="mt-6">
-        <router-link to="/menu-items/create" class="btn-primary inline-flex items-center">
+        <!-- Fixed: Added /dashboard prefix -->
+        <router-link to="/dashboard/menu-items/create" class="btn-primary inline-flex items-center">
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
@@ -125,8 +127,8 @@
                           </svg>
                         </button>
 
-                        <!-- Edit Button -->
-                        <router-link :to="`/menu-items/${item.id}/edit`">
+                        <!-- Edit Button - Fixed: Added /dashboard prefix -->
+                        <router-link :to="`/dashboard/menu-items/${item.id}/edit`">
                           <BaseButton variant="secondary" size="sm">
                             Edit
                           </BaseButton>
@@ -172,8 +174,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, } from 'vue'
-// watch
+import { ref, onMounted } from 'vue'
 import { useMenuItemStore } from '@/stores/menuItem'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BasePagination from '@/components/ui/BasePagination.vue'
@@ -225,3 +226,13 @@ const calculateFinalPrice = (price: number, tax: number, discount?: number): num
   return finalPrice
 }
 </script>
+
+<style scoped>
+.form-input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
+}
+
+.btn-primary {
+  @apply px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500;
+}
+</style>

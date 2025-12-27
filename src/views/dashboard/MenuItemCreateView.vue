@@ -1,7 +1,7 @@
 <template>
   <div class="container mx-auto px-4 py-8">
     <div class="max-w-3xl mx-auto">
-      <!-- Breadcrumb -->
+      <!-- Breadcrumb - Fixed with /dashboard prefix -->
       <nav class="mb-6" aria-label="Breadcrumb">
         <ol class="flex items-center space-x-2">
           <li>
@@ -17,7 +17,7 @@
             </svg>
           </li>
           <li>
-            <router-link to="/menu-items" class="text-gray-400 hover:text-gray-600">
+            <router-link to="/dashboard/menu-items" class="text-gray-400 hover:text-gray-600">
               Menu Items
             </router-link>
           </li>
@@ -190,15 +190,10 @@
                       d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                   <div class="mt-4">
-                    <!-- Upload Photo Button (when no image preview) -->
                     <button type="button" @click="triggerFileInput"
                       class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
                       Upload Photo
                     </button>
-
-
-
-
                     <p class="mt-1 text-xs text-gray-500">High-quality photos increase sales!</p>
                   </div>
                 </div>
@@ -214,10 +209,9 @@
                         <p class="text-xs text-gray-500">A good image makes your item more appealing</p>
                       </div>
                       <div class="flex space-x-2">
-                        <!-- Remove Photo Button -->
-                        <button type="button" @click="removeImage"
-                          class="px-3 py-1 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors duration-200">
-                          Remove
+                        <button type="button" @click="triggerFileInput"
+                          class="px-3 py-1 text-sm font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded transition-colors duration-200">
+                          Change
                         </button>
                         <button type="button" @click="removeImage"
                           class="px-3 py-1 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors duration-200">
@@ -316,7 +310,7 @@ interface ApiError {
 }
 
 const router = useRouter()
-const fileInputRef = ref<HTMLInputElement | null>(null)
+const fileInput = ref<HTMLInputElement | null>(null)
 const menuItemStore = useMenuItemStore()
 const categoryStore = useCategoryStore()
 const authStore = useAuthStore()
@@ -373,11 +367,10 @@ const loadCategories = async () => {
 }
 
 const triggerFileInput = (): void => {
-  if (fileInputRef.value) {
-    fileInputRef.value.click()
+  if (fileInput.value) {
+    fileInput.value.click()
   }
 }
-
 
 const handleImageUpload = (event: Event) => {
   const input = event.target as HTMLInputElement
@@ -563,8 +556,8 @@ const handleSubmit = async (): Promise<void> => {
     // Show success message
     alert('Menu item created successfully!')
 
-    // Redirect to menu items list
-    router.push('/menu-items')
+    // Redirect to menu items list - Fixed with /dashboard prefix
+    router.push('/dashboard/menu-items')
 
   } catch (error: unknown) {
     console.error('Failed to create menu item:', error)
@@ -609,10 +602,12 @@ function isApiError(error: unknown): error is ApiError {
 const handleCancel = (): void => {
   if (form.item_name || form.price) {
     if (confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
-      router.push('/menu-items')
+      // Fixed: Redirect to /dashboard/menu-items
+      router.push('/dashboard/menu-items')
     }
   } else {
-    router.push('/menu-items')
+    // Fixed: Redirect to /dashboard/menu-items
+    router.push('/dashboard/menu-items')
   }
 }
 </script>

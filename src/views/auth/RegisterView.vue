@@ -44,46 +44,92 @@
             @blur="validateField('password_confirmation')" />
         </div>
 
-        <!-- Error Message -->
-        <div v-if="authStore.error" class="rounded-md bg-red-50 p-4">
+        <!-- Inline error message (small errors) -->
+        <div v-if="inlineError" class="rounded-md bg-yellow-50 p-4">
           <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clip-rule="evenodd" />
+              </svg>
+            </div>
             <div class="ml-3">
-              <h3 class="text-sm font-medium text-red-800">
-                {{ authStore.error }}
-              </h3>
+              <p class="text-sm text-yellow-700">
+                {{ inlineError }}
+              </p>
             </div>
           </div>
         </div>
 
         <!-- Submit Button -->
         <div>
-          <BaseButton type="submit" :loading="authStore.loading" fullWidth size="lg">
-            Register Business
+          <BaseButton type="submit" :loading="authStore.loading" fullWidth size="lg"
+            class="bg-blue-600 hover:bg-blue-700">
+            <span v-if="authStore.loading">Registering...</span>
+            <span v-else>Register Business</span>
           </BaseButton>
         </div>
 
         <!-- Login Link -->
         <div class="text-center">
-          <router-link to="/login" class="text-sm text-primary-600 hover:text-primary-500">
+          <router-link to="/login" class="text-sm text-blue-600 hover:text-blue-500 font-medium">
             Already have an account? Sign in
           </router-link>
         </div>
+
+        <!-- Demo credentials note -->
+        <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+          <p class="text-xs text-yellow-800 text-center">
+            <strong>Demo Mode:</strong> This is a mock registration system.
+            Your data is stored locally in the browser.
+          </p>
+        </div>
       </form>
     </div>
+
+    <!-- Success Modal -->
+    <SuccessModal :open="showSuccessModal" title="Registration Successful! 🎉" :message="successMessage"
+      :credentials="registrationCredentials" confirmText="Go to Login" @close="closeSuccessModal"
+      @confirm="goToLogin" />
+
+    <!-- Error Modal for serious errors -->
+    <ErrorModal :open="showErrorModal" title="Registration Failed" :message="errorModalMessage"
+      :details="errorModalDetails" :suggestions="errorModalSuggestions" confirmText="OK" :show-retry="true"
+      @close="closeErrorModal" @retry="retryRegistration" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
-// ref
+import { reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import SuccessModal from '@/components/ui/SuccessModal.vue'
+import ErrorModal from '@/components/ui/ErrorModal.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
+// State
+const showSuccessModal = ref(false)
+const showErrorModal = ref(false)
+const successMessage = ref('')
+const inlineError = ref('')
+const errorModalMessage = ref('')
+const errorModalDetails = ref('')
+const errorModalSuggestions = ref<string[]>([])
+const registrationCredentials = ref<{ email: string; password: string } | undefined>(undefined)
+
+// Watch for auth store errors
+watch(() => authStore.error, (newError) => {
+  if (newError) {
+    handleAuthError(newError)
+  }
+})
+
+// Form data types
 interface FormData {
   name: string
   email: string
@@ -124,6 +170,64 @@ const errors = reactive<Errors>({
   password_confirmation: ''
 })
 
+// Error handling
+function handleAuthError(error: string) {
+  inlineError.value = ''
+
+  if (error.includes('Email already registered')) {
+    errorModalMessage.value = 'Email Already Exists'
+    errorModalDetails.value = error
+    errorModalSuggestions.value = [
+      'Try logging in if you already have an account',
+      'Use a different email address',
+      'If you forgot your password, use the "Forgot Password" feature'
+    ]
+    showErrorModal.value = true
+  } else if (error.includes('Missing required fields')) {
+    errorModalMessage.value = 'Missing Information'
+    errorModalDetails.value = error
+    errorModalSuggestions.value = [
+      'Fill in all required fields marked with *',
+      'Check that all fields are correctly filled',
+      'Ensure password meets minimum requirements'
+    ]
+    showErrorModal.value = true
+  } else if (error.includes('Network') || error.includes('connection')) {
+    errorModalMessage.value = 'Connection Error'
+    errorModalDetails.value = error
+    errorModalSuggestions.value = [
+      'Check your internet connection',
+      'Try again in a few moments',
+      'This is a demo app, so it uses mock data'
+    ]
+    showErrorModal.value = true
+  } else {
+    // For validation errors, show inline
+    inlineError.value = error
+  }
+}
+
+function closeSuccessModal() {
+  showSuccessModal.value = false
+}
+
+function closeErrorModal() {
+  showErrorModal.value = false
+  errorModalMessage.value = ''
+  errorModalDetails.value = ''
+  errorModalSuggestions.value = []
+  authStore.clearError()
+}
+
+function retryRegistration() {
+  showErrorModal.value = false
+  // Clear only password fields for retry
+  form.password = ''
+  form.password_confirmation = ''
+  authStore.clearError()
+}
+
+// Validation
 const validateField = (field: keyof FormData): void => {
   const value = form[field]
 
@@ -135,7 +239,7 @@ const validateField = (field: keyof FormData): void => {
       if (!value.trim()) {
         errors.email = 'Email is required'
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-        errors.email = 'Invalid email format'
+        errors.email = 'Please enter a valid email address'
       } else {
         errors.email = ''
       }
@@ -144,7 +248,7 @@ const validateField = (field: keyof FormData): void => {
       if (!value.trim()) {
         errors.phone = 'Phone number is required'
       } else if (!/^[\+]?[1-9][\d]{0,15}$/.test(value.replace(/\D/g, ''))) {
-        errors.phone = 'Invalid phone number'
+        errors.phone = 'Please enter a valid phone number'
       } else {
         errors.phone = ''
       }
@@ -184,17 +288,53 @@ const validateForm = (): boolean => {
   return !Object.values(errors).some(error => error !== '')
 }
 
+// Form submission
 const handleSubmit = async (): Promise<void> => {
+  // Clear previous errors
+  inlineError.value = ''
+  authStore.clearError()
+
   if (!validateForm()) {
     return
   }
 
   try {
-    await authStore.register(form)
-    // Redirect to login after successful registration
-    router.push('/login')
+    const result = await authStore.register(form)
+
+    if (result?.success) {
+      // Store credentials to show in modal
+      registrationCredentials.value = {
+        email: form.email,
+        password: form.password
+      }
+
+      // Set success message
+      successMessage.value = `Welcome ${form.name}! Your business "${form.business_name}" has been registered successfully.`
+
+      // Show success modal
+      showSuccessModal.value = true
+
+      // Clear form
+      Object.keys(form).forEach(key => {
+        form[key as keyof FormData] = ''
+      })
+
+      // Clear errors
+      Object.keys(errors).forEach(key => {
+        errors[key as keyof Errors] = ''
+      })
+    }
   } catch (error) {
     console.error('Registration failed:', error)
   }
+}
+
+const goToLogin = () => {
+  showSuccessModal.value = false
+  registrationCredentials.value = undefined
+  router.push({
+    path: '/login',
+    query: { registered: 'true' }
+  })
 }
 </script>
