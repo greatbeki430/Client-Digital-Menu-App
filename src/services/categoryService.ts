@@ -1,151 +1,178 @@
-import type { AxiosError } from 'axios'
-import type { Category, CategoryFormData, CategoriesResponse } from '@/types/category'
+// src/services/categoryService.ts
+import type {
+  Category,
+  CategoryFormData,
+  CategoriesResponse,
+  PaginatedResponse,
+} from '@/types/category'
 import type { ApiResponse } from '@/types/auth'
-import api from './api'
 
 class CategoryService {
+  private categories: Category[] = []
+
+  constructor() {
+    // Initialize with some mock categories
+    const now = new Date().toISOString()
+    this.categories = [
+      {
+        id: 1,
+        name: 'Beverages',
+        description: 'Drinks and refreshments',
+        created_at: now,
+        updated_at: now,
+      },
+      {
+        id: 2,
+        name: 'Appetizers',
+        description: 'Start your meal',
+        created_at: now,
+        updated_at: now,
+      },
+      { id: 3, name: 'Main Course', description: 'Hearty meals', created_at: now, updated_at: now },
+      { id: 4, name: 'Desserts', description: 'Sweet treats', created_at: now, updated_at: now },
+      { id: 5, name: 'Salads', description: 'Fresh and healthy', created_at: now, updated_at: now },
+      { id: 6, name: 'Soups', description: 'Warm soups', created_at: now, updated_at: now },
+      { id: 7, name: 'Sides', description: 'Extra sides', created_at: now, updated_at: now },
+      { id: 8, name: 'Breakfast', description: 'Start your day', created_at: now, updated_at: now },
+      { id: 9, name: 'Lunch', description: 'Midday meals', created_at: now, updated_at: now },
+      { id: 10, name: 'Dinner', description: 'Evening meals', created_at: now, updated_at: now },
+      {
+        id: 11,
+        name: 'Vegan',
+        description: 'Plant-based dishes',
+        created_at: now,
+        updated_at: now,
+      },
+      {
+        id: 12,
+        name: 'Kids Menu',
+        description: 'Meals for kids',
+        created_at: now,
+        updated_at: now,
+      },
+      { id: 13, name: 'Snacks', description: 'Quick bites', created_at: now, updated_at: now },
+      { id: 14, name: 'Seafood', description: 'Fish and more', created_at: now, updated_at: now },
+      {
+        id: 15,
+        name: 'Grill',
+        description: 'Grilled specialties',
+        created_at: now,
+        updated_at: now,
+      },
+      {
+        id: 16,
+        name: 'Pasta',
+        description: 'Italian pasta dishes',
+        created_at: now,
+        updated_at: now,
+      },
+      {
+        id: 17,
+        name: 'Pizza',
+        description: 'Cheesy and delicious',
+        created_at: now,
+        updated_at: now,
+      },
+      { id: 18, name: 'Burgers', description: 'Juicy burgers', created_at: now, updated_at: now },
+      {
+        id: 19,
+        name: 'Drinks',
+        description: 'Cold and hot beverages',
+        created_at: now,
+        updated_at: now,
+      },
+      { id: 20, name: 'Specials', description: 'Chef specials', created_at: now, updated_at: now },
+    ]
+  }
+
+  private paginate(items: Category[], page: number, per_page = 10): PaginatedResponse<Category> {
+    const total = items.length
+    const last_page = Math.ceil(total / per_page)
+    const current_page = Math.min(Math.max(page, 1), last_page || 1)
+    const from = (current_page - 1) * per_page
+    const to = from + per_page
+    return {
+      data: items.slice(from, to),
+      links: { first: null, last: null, prev: null, next: null },
+      meta: {
+        current_page,
+        from: from + 1,
+        last_page,
+        links: [],
+        path: '',
+        per_page,
+        to: Math.min(to, total),
+        total,
+      },
+    }
+  }
+
   async getAll(page = 1): Promise<ApiResponse<CategoriesResponse>> {
     try {
-      const response = await api.get<CategoriesResponse>(`/menu-managers?page=${page}`)
-      return {
-        success: true,
-        data: response,
-      }
+      const paginated = this.paginate(this.categories, page)
+      return { success: true, data: paginated }
     } catch (error: unknown) {
-      return this.handleError(error)
+      const message = error instanceof Error ? error.message : 'Failed to load categories'
+      return { success: false, message }
     }
   }
 
   async get(id: number): Promise<ApiResponse<Category>> {
     try {
-      const response = await api.get<Category>(`/menu-managers/${id}`)
-      return {
-        success: true,
-        data: response,
-      }
+      const category = this.categories.find((c) => c.id === id)
+      if (!category) throw new Error('Category not found')
+      return { success: true, data: category }
     } catch (error: unknown) {
-      return this.handleError(error)
+      return { success: false, message: (error as Error).message }
     }
   }
 
-  async create(data: CategoryFormData | FormData): Promise<ApiResponse<Category>> {
+  async create(data: CategoryFormData): Promise<ApiResponse<Category>> {
     try {
-      // Handle file upload if image is present
-      if (data instanceof FormData) {
-        const response = await api.post<Category>('/menu-managers', data, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        })
-        return {
-          success: true,
-          data: response,
-        }
+      const now = new Date().toISOString()
+      const newCategory: Category = {
+        id: this.categories.length ? Math.max(...this.categories.map((c) => c.id)) + 1 : 1,
+        name: data.name,
+        description: data.description,
+        image: typeof data.image === 'string' ? data.image : undefined,
+        created_at: now,
+        updated_at: now,
       }
-
-      // Handle file upload if image is a File object
-      if (data.image && data.image instanceof File) {
-        const formData = new FormData()
-        formData.append('name', data.name)
-        if (data.description) formData.append('description', data.description)
-        formData.append('image', data.image)
-
-        const response = await api.post<Category>('/menu-managers', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        })
-        return {
-          success: true,
-          data: response,
-        }
-      }
-
-      // Regular JSON request
-      const response = await api.post<Category>('/menu-managers', data)
-      return {
-        success: true,
-        data: response,
-      }
+      this.categories.push(newCategory)
+      return { success: true, data: newCategory }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error: unknown) {
-      return this.handleError(error)
+      return { success: false, message: 'Failed to create category' }
     }
   }
 
-  async update(id: number, data: CategoryFormData | FormData): Promise<ApiResponse<Category>> {
+  async update(id: number, data: CategoryFormData): Promise<ApiResponse<Category>> {
     try {
-      // Handle file upload for updates
-      if (data instanceof FormData) {
-        data.append('_method', 'PUT')
-        const response = await api.post<Category>(`/menu-managers/${id}`, data, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        })
-        return {
-          success: true,
-          data: response,
-        }
+      const index = this.categories.findIndex((c) => c.id === id)
+      if (index === -1) throw new Error('Category not found')
+      const existing = this.categories[index]!
+      const updatedCategory: Category = {
+        id: existing.id,
+        name: data.name,
+        description: data.description,
+        image: typeof data.image === 'string' ? data.image : existing.image,
+        created_at: existing.created_at,
+        updated_at: new Date().toISOString(),
       }
-
-      // Handle file upload if image is a File object
-      if (data.image && data.image instanceof File) {
-        const formData = new FormData()
-        formData.append('name', data.name)
-        if (data.description) formData.append('description', data.description)
-        formData.append('image', data.image)
-        formData.append('_method', 'PUT')
-
-        const response = await api.post<Category>(`/menu-managers/${id}`, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        })
-        return {
-          success: true,
-          data: response,
-        }
-      }
-
-      // Regular JSON request
-      const response = await api.put<Category>(`/menu-managers/${id}`, data)
-      return {
-        success: true,
-        data: response,
-      }
+      this.categories[index] = updatedCategory
+      return { success: true, data: updatedCategory }
     } catch (error: unknown) {
-      return this.handleError(error)
+      return { success: false, message: (error as Error).message }
     }
   }
 
   async delete(id: number): Promise<ApiResponse<void>> {
     try {
-      await api.delete(`/menu-managers/${id}`)
-      return {
-        success: true,
-      }
+      this.categories = this.categories.filter((c) => c.id !== id)
+      return { success: true }
     } catch (error: unknown) {
-      return this.handleError(error)
-    }
-  }
-
-  private handleError<T = unknown>(error: unknown): ApiResponse<T> {
-    const axiosError = error as AxiosError<{ message?: string; errors?: Record<string, string[]> }>
-
-    if (axiosError.response?.data) {
-      return {
-        success: false,
-        message: axiosError.response.data.message || 'An error occurred',
-        errors: axiosError.response.data.errors,
-        status: axiosError.response.status,
-      }
-    }
-
-    const message = error instanceof Error ? error.message : 'Network error'
-
-    return {
-      success: false,
-      message,
+      const message = error instanceof Error ? error.message : 'Failed to delete category'
+      return { success: false, message }
     }
   }
 }
