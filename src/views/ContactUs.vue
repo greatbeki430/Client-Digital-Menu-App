@@ -365,7 +365,8 @@ export default {
           this.showSuccess = false
         }, 5000)
 
-      } catch (err) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (err: any) {
         this.error = err.message || 'Failed to send message. Please try again.'
       } finally {
         this.loading = false
