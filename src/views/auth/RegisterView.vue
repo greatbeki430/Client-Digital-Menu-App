@@ -90,7 +90,7 @@
 
     <!-- Success Modal -->
     <SuccessModal :open="showSuccessModal" title="Registration Successful! 🎉" :message="successMessage"
-      :credentials="registrationCredentials" confirmText="Go to Login" @close="closeSuccessModal"
+      :credentials="registrationCredentials" confirmText="Go to Login" :autoCloseDelay="5000" @close="closeSuccessModal"
       @confirm="goToLogin" />
 
     <!-- Error Modal for serious errors -->
@@ -126,6 +126,18 @@ const registrationCredentials = ref<{ email: string; password: string } | undefi
 watch(() => authStore.error, (newError) => {
   if (newError) {
     handleAuthError(newError)
+  }
+})
+
+// Watch for auth store success modal state
+watch(() => authStore.showSuccessModal, (show) => {
+  if (show) {
+    // Get data from auth store
+    successMessage.value = authStore.successMessage
+
+    registrationCredentials.value = authStore.registrationCredentials || undefined
+
+    showSuccessModal.value = true
   }
 })
 
@@ -209,6 +221,8 @@ function handleAuthError(error: string) {
 
 function closeSuccessModal() {
   showSuccessModal.value = false
+  // Also hide modal in auth store
+  authStore.hideSuccessModal()
 }
 
 function closeErrorModal() {
@@ -302,17 +316,8 @@ const handleSubmit = async (): Promise<void> => {
     const result = await authStore.register(form)
 
     if (result?.success) {
-      // Store credentials to show in modal
-      registrationCredentials.value = {
-        email: form.email,
-        password: form.password
-      }
-
-      // Set success message
-      successMessage.value = `Welcome ${form.name}! Your business "${form.business_name}" has been registered successfully.`
-
-      // Show success modal
-      showSuccessModal.value = true
+      // Note: The modal is now handled by the auth store state
+      // The watch() function above will pick up the success state
 
       // Clear form
       Object.keys(form).forEach(key => {
@@ -330,7 +335,7 @@ const handleSubmit = async (): Promise<void> => {
 }
 
 const goToLogin = () => {
-  showSuccessModal.value = false
+  closeSuccessModal()
   registrationCredentials.value = undefined
   router.push({
     path: '/login',

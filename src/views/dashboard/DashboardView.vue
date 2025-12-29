@@ -191,8 +191,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { authUtils } from '@/utils/auth'
+
+
+// Component-level variable for interval - FIXED: Use number instead of NodeJS.Timeout
+let tokenCheckInterval: number | null = null
+
+// Loading state
+const isLoading = ref(true)
+const authStore = useAuthStore()
+const router = useRouter()
 
 interface Activity {
   id: number
@@ -207,8 +218,6 @@ interface Stats {
   favorites: number
 }
 
-const authStore = useAuthStore()
-
 const stats = ref<Stats>({
   categories: 0,
   menuItems: 0,
@@ -222,20 +231,143 @@ const activityTypeClasses = {
   'menu-item': 'bg-green-100 text-green-800'
 }
 
-onMounted(() => {
-  // Mock data for now - will be replaced with API calls
-  stats.value = {
-    categories: 5,
-    menuItems: 12,
-    favorites: 3
+onMounted(async () => {
+  console.log('=== DASHBOARD MOUNTED ===')
+
+  try {
+    // Step 1: Use authUtils to validate authentication
+    const token = authUtils.getToken()
+    console.log('🔑 Token from authUtils:', token ? 'Exists' : 'Missing')
+
+    if (!token) {
+      console.warn('❌ No access token found')
+      await handleUnauthenticated()
+      return
+    }
+
+    // Step 2: Use authUtils to validate JWT
+    if (!authUtils.validateJWT(token)) {
+      console.warn('❌ JWT token validation failed')
+      await handleUnauthenticated()
+      return
+    }
+
+    // Step 3: Use authUtils to validate and sync auth store
+    if (!authUtils.validateAuth(authStore)) {
+      console.warn('❌ Auth store validation failed')
+      await handleUnauthenticated()
+      return
+    }
+
+    console.log('✅ Authentication successful (via authUtils):', {
+      user: authStore.user?.name,
+      business: authStore.user?.business_name,
+      isAuthenticated: authStore.isAuthenticated
+    })
+
+    // Step 4: Set up periodic token check (every 30 seconds)
+    tokenCheckInterval = window.setInterval(() => {
+      const currentToken = authUtils.getToken()
+      if (!currentToken || !authUtils.validateJWT(currentToken)) {
+        console.warn('⚠️ Token validation failed during periodic check')
+        handleUnauthenticated()
+      }
+    }, 30000)
+
+    // Step 5: Set a timeout to detect if navigation happens
+    const navigationCheck = setTimeout(() => {
+      console.log('✅ Dashboard still visible after 2 seconds - authentication successful')
+    }, 2000)
+
+    // Step 6: Load dashboard data
+    await loadDashboardData()
+
+    // Step 7: Clear loading state
+    isLoading.value = false
+
+    // Clean up navigation check
+    clearTimeout(navigationCheck)
+
+    console.log('🎉 Dashboard fully loaded and ready!')
+
+  } catch (error) {
+    console.error('❌ Critical error in dashboard initialization:', error)
+    await handleUnauthenticated()
+  }
+})
+
+// Cleanup on unmount
+onUnmounted(() => {
+  if (tokenCheckInterval) {
+    window.clearInterval(tokenCheckInterval)
+    tokenCheckInterval = null
+  }
+})
+
+// Handle unauthenticated state
+async function handleUnauthenticated() {
+  console.log('🔐 User not authenticated, redirecting to login...')
+
+  // Clear interval if it exists
+  if (tokenCheckInterval) {
+    window.clearInterval(tokenCheckInterval)
+    tokenCheckInterval = null
   }
 
-  recentActivity.value = [
-    { id: 1, type: 'category', description: 'Created "Desserts" category', timestamp: new Date(Date.now() - 3600000).toISOString() },
-    { id: 2, type: 'menu-item', description: 'Added "Chocolate Cake" to menu', timestamp: new Date(Date.now() - 7200000).toISOString() },
-    { id: 3, type: 'menu-item', description: 'Updated price for "Burger"', timestamp: new Date(Date.now() - 10800000).toISOString() }
-  ]
-})
+  localStorage.removeItem('access_token')
+  localStorage.removeItem('user')
+
+  authStore.user = null
+
+  router.push('/login')
+}
+
+// Load dashboard data
+async function loadDashboardData() {
+  console.log('📊 Loading dashboard data...')
+
+  try {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    stats.value = {
+      categories: 5,
+      menuItems: 12,
+      favorites: 3
+    }
+
+    recentActivity.value = [
+      {
+        id: 1,
+        type: 'category',
+        description: 'Created "Desserts" category',
+        timestamp: new Date(Date.now() - 3600000).toISOString()
+      },
+      {
+        id: 2,
+        type: 'menu-item',
+        description: 'Added "Chocolate Cake" to menu',
+        timestamp: new Date(Date.now() - 7200000).toISOString()
+      },
+      {
+        id: 3,
+        type: 'menu-item',
+        description: 'Updated price for "Burger"',
+        timestamp: new Date(Date.now() - 10800000).toISOString()
+      }
+    ]
+
+    console.log('✅ Dashboard data loaded successfully')
+  } catch (error) {
+    console.error('❌ Failed to load dashboard data:', error)
+    stats.value = {
+      categories: 0,
+      menuItems: 0,
+      favorites: 0
+    }
+    recentActivity.value = []
+  }
+}
 
 const formatTime = (timestamp: string): string => {
   const now = new Date()

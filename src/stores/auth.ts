@@ -1,176 +1,35 @@
+// src/stores/auth.ts
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { User, LoginCredentials, RegisterData, ApiResponse, AuthResponse } from '@/types/auth'
-// import authService from '@/services/authService'
 import router from '@/router'
+import { authUtils } from '@/utils/auth'
 
-/*
-// ORIGINAL CODE - KEPT FOR WHEN API IS FIXED
-export const useAuthStore = defineStore('auth', () => {
-  // State
-  const user = ref<User | null>(authService.getUserData())
-  const loading = ref(false)
-  const error = ref<string | null>(null)
-  const registrationCredentials = ref<{ email: string; password: string } | null>(null)
-
-  // Getters
-  const isAuthenticated = computed(() => !!user.value)
-  const userName = computed(() => user.value?.name || '')
-  const businessName = computed(() => user.value?.business_name || '')
-
-  // Initialize from localStorage
-  const initFromStorage = (): void => {
-    const token = localStorage.getItem('access_token')
-    if (token) {
-      fetchCurrentUser()
-    }
-  }
-
-  // Actions
-  async function register(data: RegisterData): Promise<ApiResponse> {
-    try {
-      loading.value = true
-      error.value = null
-
-      const response = await authService.register(data)
-
-      if (!response.success) {
-        throw new Error(response.message)
-      }
-
-      if (response.data) {
-        user.value = response.data.user
-
-        // Store credentials for display (Exam requirement)
-        registrationCredentials.value = {
-          email: data.email,
-          password: data.password,
-        }
-
-        // Clear after 30 seconds
-        setTimeout(() => {
-          registrationCredentials.value = null
-        }, 30000)
-      }
-
-      router.push('/dashboard')
-      return response
-    } catch (err: unknown) {
-      // Narrow the unknown type
-      if (err instanceof Error) {
-        error.value = err.message
-        throw err
-      } else {
-        // fallback for non-Error throwables
-        error.value = String(err)
-        throw new Error(String(err))
-      }
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function login(credentials: LoginCredentials): Promise<ApiResponse> {
-    try {
-      loading.value = true
-      error.value = null
-
-      const response = await authService.login(credentials)
-
-      if (!response.success) {
-        throw new Error(response.message)
-      }
-
-      if (response.data) {
-        user.value = response.data.user
-      }
-
-      router.push('/dashboard')
-      return response
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        error.value = err.message
-        throw err
-      } else {
-        error.value = String(err)
-        throw new Error(String(err))
-      }
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function logout(): Promise<void> {
-    try {
-      loading.value = true
-      await authService.logout()
-      user.value = null
-      router.push('/login')
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function fetchCurrentUser(): Promise<void> {
-    try {
-      const response = await authService.getUser()
-      if (response.success && response.data) {
-        user.value = response.data
-      } else {
-        localStorage.removeItem('access_token')
-        user.value = null
-      }
-    } catch (error) {
-      console.error('Failed to fetch user:', error)
-      localStorage.removeItem('access_token')
-      user.value = null
-    }
-  }
-
-  function clearError(): void {
-    error.value = null
-  }
-
-  return {
-    // State
-    user,
-    loading,
-    error,
-    registrationCredentials,
-
-    // Getters
-    isAuthenticated,
-    userName,
-    businessName,
-
-    // Actions
-    initFromStorage,
-    register,
-    login,
-    logout,
-    fetchCurrentUser,
-    clearError,
-  }
-})
-*/
-
-// ========== NEW MOCK AUTH STORE ==========
-// Use this while the real API is broken (Route [login] not defined)
 export const useAuthStore = defineStore('auth', () => {
   // State
   const user = ref<User | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
   const registrationCredentials = ref<{ email: string; password: string } | null>(null)
+  const showSuccessModal = ref(false)
+  const successMessage = ref('')
 
+  // ==================== INITIALIZATION ====================
   // Initialize from localStorage on store creation
   const initFromLocalStorage = () => {
-    const storedUser = localStorage.getItem('mock_user')
-    const storedToken = localStorage.getItem('mock_access_token')
+    const storedUser = localStorage.getItem('user')
+    const storedToken = localStorage.getItem('access_token')
 
     if (storedUser && storedToken) {
       try {
-        user.value = JSON.parse(storedUser)
+        // Use authUtils to validate token
+        if (authUtils.validateJWT(storedToken)) {
+          user.value = JSON.parse(storedUser)
+          console.log('✅ User initialized from localStorage')
+        } else {
+          console.log('❌ Token invalid/expired, clearing storage')
+          clearStorage()
+        }
       } catch (e) {
         console.error('Failed to parse stored user:', e)
         clearStorage()
@@ -178,28 +37,26 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // Clear all mock storage
+  // Clear all storage
   const clearStorage = () => {
-    localStorage.removeItem('mock_access_token')
-    localStorage.removeItem('mock_user')
-    localStorage.removeItem('access_token') // Clear any real tokens too
+    authUtils.clearAuthData()
     user.value = null
   }
 
   // Initialize immediately
   initFromLocalStorage()
 
-  // Getters
-  const isAuthenticated = computed(() => !!user.value)
+  // ==================== GETTERS ====================
+  const isAuthenticated = computed(() => authUtils.isAuthenticated())
   const userName = computed(() => user.value?.name || '')
   const businessName = computed(() => user.value?.business_name || '')
 
-  // Initialize from localStorage (mock version)
+  // Initialize from localStorage
   const initFromStorage = (): void => {
     initFromLocalStorage()
   }
 
-  // Actions
+  // ==================== ACTIONS ====================
   async function register(data: RegisterData): Promise<ApiResponse<AuthResponse>> {
     try {
       loading.value = true
@@ -210,7 +67,6 @@ export const useAuthStore = defineStore('auth', () => {
       await new Promise((resolve) => setTimeout(resolve, 1500))
 
       // === VALIDATION ===
-      // Required fields validation
       const requiredFields = [
         'name',
         'email',
@@ -277,22 +133,20 @@ export const useAuthStore = defineStore('auth', () => {
         tin: data.tin.trim(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        email_verified_at: new Date().toISOString(), // Mock verified
+        email_verified_at: new Date().toISOString(),
       }
 
-      // === CREATE MOCK TOKEN AND RESPONSE ===
-      const mockToken = `mock_jwt_token_${Date.now()}_${mockUser.id}`
+      // === CREATE JWT TOKEN using authUtils ===
+      const mockToken = authUtils.generateMockJWT(mockUser.id, mockUser)
       const mockAuthResponse: AuthResponse = {
         access_token: mockToken,
         token_type: 'bearer',
-        expires_in: 3600, // 1 hour
+        expires_in: 86400, // 24 hours
         user: mockUser,
       }
 
-      // === STORE DATA ===
-      // Store mock token and user
-      localStorage.setItem('mock_access_token', mockToken)
-      localStorage.setItem('mock_user', JSON.stringify(mockUser))
+      // === STORE DATA using authUtils ===
+      authUtils.setAuthData(mockToken, mockUser)
 
       // Also store in mock users list
       const existing = localStorage.getItem('mock_users')
@@ -303,7 +157,7 @@ export const useAuthStore = defineStore('auth', () => {
       // Update state
       user.value = mockUser
 
-      // Store credentials for display (as per requirements)
+      // Store credentials for display
       registrationCredentials.value = {
         email: data.email,
         password: data.password,
@@ -314,7 +168,7 @@ export const useAuthStore = defineStore('auth', () => {
         registrationCredentials.value = null
       }, 30000)
 
-      // === SUCCESS RESPONSE ===
+      // === SUCCESS RESPONSE & MODAL ===
       const successResponse: ApiResponse<AuthResponse> = {
         success: true,
         data: mockAuthResponse,
@@ -323,18 +177,21 @@ export const useAuthStore = defineStore('auth', () => {
 
       console.log('Registration successful:', successResponse)
 
-      // Show success message
-      alert(
-        '✅ Registration successful!\n\nYou are now logged in with your mock account.\n\nYou can use these credentials to login later:\nEmail: ' +
-          data.email +
-          '\nPassword: ' +
-          data.password,
-      )
+      // Set success message for modal
+      successMessage.value = `Welcome ${data.name}! Your business "${data.business_name}" has been registered successfully. You can now login with your credentials.`
 
-      // Navigate to dashboard
+      // Show success modal
+      showSuccessModal.value = true
+
+      // Auto-hide modal after 5 seconds
+      setTimeout(() => {
+        hideSuccessModal()
+      }, 5000)
+
+      // Navigate to login (not dashboard directly)
       setTimeout(() => {
         router.push('/login')
-      }, 500)
+      }, 1000)
 
       return successResponse
     } catch (err: unknown) {
@@ -381,18 +238,18 @@ export const useAuthStore = defineStore('auth', () => {
           updated_at: new Date().toISOString(),
         }
 
-        const mockToken = 'mock_jwt_token_test_account'
+        // Use authUtils to generate token
+        const mockToken = authUtils.generateMockJWT(testUser.id, testUser)
         const mockAuthResponse: AuthResponse = {
           access_token: mockToken,
           token_type: 'bearer',
-          expires_in: 3600,
+          expires_in: 86400,
           user: testUser,
         }
 
-        // Store data
+        // Store data using authUtils
         user.value = testUser
-        localStorage.setItem('mock_access_token', mockToken)
-        localStorage.setItem('mock_user', JSON.stringify(testUser))
+        authUtils.setAuthData(mockToken, testUser)
 
         const successResponse: ApiResponse<AuthResponse> = {
           success: true,
@@ -401,6 +258,11 @@ export const useAuthStore = defineStore('auth', () => {
         }
 
         console.log('Login successful with test account')
+
+        // Show success message
+        successMessage.value = 'Welcome back! Login successful with test account.'
+        showSuccessModal.value = true
+        setTimeout(() => hideSuccessModal(), 3000)
 
         // Navigate to dashboard
         setTimeout(() => {
@@ -411,57 +273,23 @@ export const useAuthStore = defineStore('auth', () => {
       }
 
       // === CHECK REGISTERED USERS ===
-      const storedUser = localStorage.getItem('mock_user')
       const mockUsers = localStorage.getItem('mock_users')
 
-      if (storedUser) {
-        const parsedUser: User = JSON.parse(storedUser)
-        if (parsedUser.email === credentials.email) {
-          // In real app, we'd check hashed password
-          // For mock, we'll accept any password for registered users
-          const mockToken = `mock_jwt_token_${Date.now()}`
-          const mockAuthResponse: AuthResponse = {
-            access_token: mockToken,
-            token_type: 'bearer',
-            expires_in: 3600,
-            user: parsedUser,
-          }
-
-          // Update token
-          localStorage.setItem('mock_access_token', mockToken)
-          user.value = parsedUser
-
-          const successResponse: ApiResponse<AuthResponse> = {
-            success: true,
-            data: mockAuthResponse,
-            message: 'Login successful',
-          }
-
-          console.log('Login successful with registered account')
-
-          setTimeout(() => {
-            router.push('/dashboard')
-          }, 500)
-
-          return successResponse
-        }
-      }
-
-      // === CHECK MOCK USERS LIST ===
       if (mockUsers) {
         const users: User[] = JSON.parse(mockUsers)
         const foundUser = users.find((u) => u.email === credentials.email)
         if (foundUser) {
-          const mockToken = `mock_jwt_token_${Date.now()}`
+          // Use authUtils to generate token
+          const mockToken = authUtils.generateMockJWT(foundUser.id, foundUser)
           const mockAuthResponse: AuthResponse = {
             access_token: mockToken,
             token_type: 'bearer',
-            expires_in: 3600,
+            expires_in: 86400,
             user: foundUser,
           }
 
-          localStorage.setItem('mock_access_token', mockToken)
-          localStorage.setItem('mock_user', JSON.stringify(foundUser))
+          // Store data using authUtils
+          authUtils.setAuthData(mockToken, foundUser)
           user.value = foundUser
 
           const successResponse: ApiResponse<AuthResponse> = {
@@ -471,6 +299,11 @@ export const useAuthStore = defineStore('auth', () => {
           }
 
           console.log('Login successful from mock users list')
+
+          // Show success message
+          successMessage.value = `Welcome back ${foundUser.name}! Login successful.`
+          showSuccessModal.value = true
+          setTimeout(() => hideSuccessModal(), 3000)
 
           setTimeout(() => {
             router.push('/dashboard')
@@ -511,8 +344,9 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true
 
-      // Clear all storage
-      clearStorage()
+      // Clear all storage using authUtils
+      authUtils.clearAuthData()
+      user.value = null
       registrationCredentials.value = null
 
       console.log('Logout successful')
@@ -530,8 +364,11 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function fetchCurrentUser(): Promise<void> {
     try {
-      const storedUser = localStorage.getItem('mock_user')
-      if (storedUser) {
+      const storedUser = localStorage.getItem('user')
+      const storedToken = localStorage.getItem('access_token')
+
+      // Use authUtils to validate token
+      if (storedUser && storedToken && authUtils.validateJWT(storedToken)) {
         user.value = JSON.parse(storedUser)
       } else {
         clearStorage()
@@ -546,6 +383,17 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
   }
 
+  // Hide success modal
+  function hideSuccessModal(): void {
+    showSuccessModal.value = false
+    successMessage.value = ''
+  }
+
+  // Validate current token using authUtils
+  function validateCurrentToken(): boolean {
+    return authUtils.isAuthenticated()
+  }
+
   // Initialize on store creation
   initFromStorage()
 
@@ -555,6 +403,8 @@ export const useAuthStore = defineStore('auth', () => {
     loading,
     error,
     registrationCredentials,
+    showSuccessModal,
+    successMessage,
 
     // Getters
     isAuthenticated,
@@ -568,5 +418,7 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     fetchCurrentUser,
     clearError,
+    hideSuccessModal,
+    validateCurrentToken,
   }
 })

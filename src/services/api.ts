@@ -21,39 +21,81 @@ class ApiService {
     // Request interceptor to add auth token
     this.api.interceptors.request.use(
       (config) => {
-        // Try different token storage keys
-        const token =
-          localStorage.getItem('access_token') ||
-          localStorage.getItem('token') ||
-          sessionStorage.getItem('access_token')
+        // Use localStorage directly (available in browser)
+        if (typeof window !== 'undefined') {
+          console.log(`📤 API Request to: ${config.url}`)
+          console.log('HTTP Method:', config.method?.toUpperCase())
 
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`
-        } else {
-          // If no token and we're trying to access protected route
-          console.warn('No authentication token found')
+          // Try different token storage keys
+          const token =
+            localStorage.getItem('access_token') ||
+            localStorage.getItem('mock_access_token') ||
+            localStorage.getItem('token') ||
+            sessionStorage.getItem('access_token')
+
+          console.log('🔑 Token found:', token ? 'Yes' : 'No')
+          console.log(
+            '🔑 Token value (first 20 chars):',
+            token ? token.substring(0, 20) + '...' : 'None',
+          )
+          console.log('🔑 Full token check:')
+          console.log(
+            '  - access_token:',
+            localStorage.getItem('access_token') ? 'Exists' : 'Missing',
+          )
+          console.log(
+            '  - mock_access_token:',
+            localStorage.getItem('mock_access_token') ? 'Exists' : 'Missing',
+          )
+          console.log('  - token:', localStorage.getItem('token') ? 'Exists' : 'Missing')
+
+          if (token) {
+            config.headers.Authorization = `Bearer ${token}`
+            console.log(
+              '✅ Authorization header added:',
+              config.headers.Authorization?.substring(0, 30) + '...',
+            )
+          } else {
+            console.warn('⚠️ No authentication token found for request')
+            console.log('📋 All localStorage:', { ...localStorage })
+          }
         }
+
         return config
       },
       (error) => {
+        console.error('❌ Request interceptor error:', error)
         return Promise.reject(error)
       },
     )
 
     // Response interceptor
     this.api.interceptors.response.use(
-      (response) => response,
+      (response) => {
+        console.log(`✅ API Response from: ${response.config.url}`, response.status)
+        return response
+      },
       (error) => {
-        if (error.response?.status === 401) {
+        console.error(`❌ API Error from: ${error.config?.url}`, {
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message,
+        })
+
+        if (error.response?.status === 401 && typeof window !== 'undefined') {
+          console.warn('🔐 401 Unauthorized - Clearing auth data')
           // Clear all auth data
           localStorage.removeItem('access_token')
+          localStorage.removeItem('mock_access_token')
           localStorage.removeItem('token')
           localStorage.removeItem('user')
+          localStorage.removeItem('mock_user')
           sessionStorage.clear()
 
-          // Redirect to login page (if you have one)
-          // window.location.href = '/login'
-          console.error('Authentication required. Please log in.')
+          // Redirect to login
+          if (!window.location.pathname.includes('/login')) {
+            window.location.href = '/login'
+          }
         }
         return Promise.reject(error)
       },

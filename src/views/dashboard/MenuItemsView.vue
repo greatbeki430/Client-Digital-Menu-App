@@ -7,7 +7,7 @@
           <h1 class="text-3xl font-bold text-gray-900">Menu Items</h1>
           <p class="text-gray-600 mt-2">Manage your restaurant menu items</p>
         </div>
-        <!-- Fixed: Added /dashboard prefix -->
+        <!--Added /dashboard prefix -->
         <router-link to="/dashboard/menu-items/create">
           <BaseButton variant="primary">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -28,7 +28,8 @@
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
-        <input v-model="searchQuery" type="text" class="pl-10 form-input"
+        <input v-model="searchQuery" type="text"
+          class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
           placeholder="Search items by name or category..." @input="handleSearch" />
       </div>
     </div>
@@ -53,8 +54,9 @@
       <h3 class="mt-4 text-lg font-medium text-gray-900">No menu items yet</h3>
       <p class="mt-1 text-gray-500">Get started by creating your first menu item.</p>
       <div class="mt-6">
-        <!-- Fixed: Added /dashboard prefix -->
-        <router-link to="/dashboard/menu-items/create" class="btn-primary inline-flex items-center">
+        <!--Added /dashboard prefix -->
+        <router-link to="/dashboard/menu-items/create"
+          class="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
           </svg>
@@ -175,17 +177,64 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useMenuItemStore } from '@/stores/menuItem'
+import { useAuthStore } from '@/stores/auth'
 import BaseButton from '@/components/ui/BaseButton.vue'
 import BasePagination from '@/components/ui/BasePagination.vue'
 import { debounce } from '@/utils/helpers'
 
+const router = useRouter()
 const menuItemStore = useMenuItemStore()
+const authStore = useAuthStore()
 const searchQuery = ref('')
 const deletingId = ref<number | null>(null)
 
-onMounted(() => {
-  menuItemStore.fetchMenuItems()
+onMounted(async () => {
+  console.log('=== DEBUG: MenuItemsView mounted ===')
+
+  // Debug localStorage
+  console.log('🔍 Checking localStorage:')
+  console.log('Standard access_token:', localStorage.getItem('access_token'))
+  console.log('Standard user:', localStorage.getItem('user'))
+  console.log('Mock access_token:', localStorage.getItem('mock_access_token'))
+  console.log('Mock user:', localStorage.getItem('mock_user'))
+  console.log('All localStorage keys:', Object.keys(localStorage))
+
+  // Clear old mock data if exists
+  if (localStorage.getItem('mock_access_token') || localStorage.getItem('mock_user')) {
+    console.log('🧹 Clearing old mock data...')
+    localStorage.removeItem('mock_access_token')
+    localStorage.removeItem('mock_user')
+  }
+
+  console.log('Is authenticated (store):', authStore.isAuthenticated)
+  console.log('User from store:', authStore.user)
+  console.log('Access token from localStorage (after cleanup):', localStorage.getItem('access_token'))
+
+  // Check authentication
+  if (!authStore.isAuthenticated) {
+    console.warn('⚠️ User not authenticated according to store, redirecting to login')
+    router.push('/login')
+    return
+  }
+
+  try {
+    console.log('🔄 Fetching menu items...')
+    const response = await menuItemStore.fetchMenuItems()
+    console.log('✅ Fetch response:', response)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (error: any) {
+    console.error('❌ Error fetching menu items:', error)
+    console.error('Error message:', error.message)
+    console.error('Error response:', error.response)
+
+    if (error.message?.includes('Unauthenticated') || error.response?.status === 401) {
+      console.warn('🔐 Token invalid/expired, logging out...')
+      await authStore.logout()
+      router.push('/login')
+    }
+  }
 })
 
 const handlePageChange = (page: number): void => {
@@ -226,13 +275,3 @@ const calculateFinalPrice = (price: number, tax: number, discount?: number): num
   return finalPrice
 }
 </script>
-
-<style scoped>
-.form-input {
-  @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500;
-}
-
-.btn-primary {
-  @apply px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500;
-}
-</style>

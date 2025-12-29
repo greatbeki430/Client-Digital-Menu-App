@@ -104,6 +104,11 @@
       </form>
     </div>
 
+    <!-- Success Modal for Login -->
+    <SuccessModal :open="showLoginSuccess" title="Login Successful! ✅"
+      message="Welcome back! You have successfully logged in." confirmText="Continue to Dashboard"
+      :autoCloseDelay="3000" @close="hideLoginSuccessModal" @confirm="handleLoginSuccessConfirm" />
+
     <!-- Error Modal for serious errors -->
     <ErrorModal :open="showErrorModal" title="Login Failed" :message="errorModalMessage" :details="errorModalDetails"
       :suggestions="errorModalSuggestions" confirmText="OK" :show-retry="true" @close="closeErrorModal"
@@ -117,6 +122,7 @@ import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import BaseInput from '@/components/ui/BaseInput.vue'
 import BaseButton from '@/components/ui/BaseButton.vue'
+import SuccessModal from '@/components/ui/SuccessModal.vue'
 import ErrorModal from '@/components/ui/ErrorModal.vue'
 
 const authStore = useAuthStore()
@@ -124,6 +130,7 @@ const route = useRoute()
 
 // State
 const showRegistrationSuccess = ref(false)
+const showLoginSuccess = ref(false)
 const showErrorModal = ref(false)
 const inlineError = ref('')
 const errorModalMessage = ref('')
@@ -153,6 +160,19 @@ const errors = reactive<Errors>({
   password: ''
 })
 
+// Watch for auth store user changes (login success)
+watch(() => authStore.user, (user) => {
+  if (user) {
+    // Show login success modal
+    showLoginSuccess.value = true
+
+    // Auto-hide after 3 seconds
+    setTimeout(() => {
+      hideLoginSuccessModal()
+    }, 3000)
+  }
+})
+
 // Watch for auth store errors
 watch(() => authStore.error, (newError) => {
   if (newError) {
@@ -169,6 +189,16 @@ onMounted(() => {
     }, 5000)
   }
 })
+
+// Modal handlers
+function hideLoginSuccessModal() {
+  showLoginSuccess.value = false
+}
+
+function handleLoginSuccessConfirm() {
+  hideLoginSuccessModal()
+  // Already navigating to dashboard from auth store
+}
 
 // Error handling
 function handleAuthError(error: string) {
