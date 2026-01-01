@@ -39,3 +39,6 @@ __screenshots__/
 .env
 .env.*
 !*.example
+
+.env.local
+.env.*.local

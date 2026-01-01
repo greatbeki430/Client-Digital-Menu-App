@@ -86,8 +86,6 @@
         <span class="text-gray-400 text-xs font-normal ml-1">(Optional)</span>
       </label>
       <div class="mt-1">
-        <!-- Similar image upload component as in CategoryForm -->
-        <!-- Implementation matches your existing pattern -->
       </div>
     </div>
 

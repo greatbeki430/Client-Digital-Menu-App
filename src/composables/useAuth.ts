@@ -1,5 +1,4 @@
 import { computed } from 'vue'
-// ref,
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import type { LoginCredentials, RegisterData } from '@/types/auth'

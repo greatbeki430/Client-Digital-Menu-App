@@ -421,6 +421,8 @@ const loadMenuItem = async (): Promise<void> => {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       category: undefined,
+      description: undefined,
+      tags: undefined
     }
 
     menuItemData.value = mockData

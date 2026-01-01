@@ -1,7 +1,7 @@
 <template>
   <div class="container mx-auto px-4 py-8">
     <div class="max-w-3xl mx-auto">
-      <!-- Breadcrumb - Fixed with /dashboard prefix -->
+      <!-- Fixed with /dashboard prefix -->
       <nav class="mb-6" aria-label="Breadcrumb">
         <ol class="flex items-center space-x-2">
           <li>
@@ -545,7 +545,7 @@ const handleSubmit = async (): Promise<void> => {
       formData.append('photo', form.photo)
     }
 
-    // Add business_id from auth store
+    // Adds business_id from auth store
     if (authStore.user?.id) {
       formData.append('business_id', authStore.user.id.toString())
     }
@@ -556,7 +556,7 @@ const handleSubmit = async (): Promise<void> => {
     // Show success message
     alert('Menu item created successfully!')
 
-    // Redirect to menu items list - Fixed with /dashboard prefix
+    // Redirect to menu items list - with /dashboard prefix
     router.push('/dashboard/menu-items')
 
   } catch (error: unknown) {
@@ -602,11 +602,11 @@ function isApiError(error: unknown): error is ApiError {
 const handleCancel = (): void => {
   if (form.item_name || form.price) {
     if (confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
-      // Fixed: Redirect to /dashboard/menu-items
+      // Redirect to /dashboard/menu-items
       router.push('/dashboard/menu-items')
     }
   } else {
-    // Fixed: Redirect to /dashboard/menu-items
+    // Redirect to /dashboard/menu-items
     router.push('/dashboard/menu-items')
   }
 }

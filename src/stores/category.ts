@@ -44,10 +44,6 @@ export const useCategoryStore = defineStore('category', () => {
 
       const response = await categoryService.getAll(page)
 
-      // if (!response.success) {
-      //   throw new Error(response.message)
-      // }
-
        if (!response.success) {
          // If real API fails, try TheMealDB
          console.warn('Real API failed, trying TheMealDB...')

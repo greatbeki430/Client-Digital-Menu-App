@@ -63,25 +63,42 @@ const authStore = useAuthStore()
 const appName = import.meta.env.VITE_APP_NAME || 'Digital Menu'
 
 const navigationLinks = computed(() => {
+  console.log('🔄 Navigation links computed, isAuthenticated:', authStore.isAuthenticated)
+
   // For authenticated users (admin), show dashboard routes
   if (authStore.isAuthenticated) {
-    return [
+    const links = [
       { to: '/dashboard', label: 'Dashboard' },
       { to: '/dashboard/categories', label: 'Categories' },
-      { to: '/dashboard/menu-items', label: 'Menu Items' }
+      { to: '/dashboard/menu-items', label: 'Menu Items' }  
     ]
+    console.log('✅ Authenticated links:', links)
+    return links
   }
 
   // For non-authenticated users (customers), show public routes
-  return [
+  const publicLinks = [
     { to: '/menu', label: 'Menu' },
     { to: '/categories', label: 'Categories' },
     { to: '/', label: 'Home' }
   ]
+  console.log('👤 Public links:', publicLinks)
+  return publicLinks
 })
 
 const handleLogout = async () => {
+  console.log('🚪 Logging out...')
   await authStore.logout()
   router.push('/login')
 }
 </script>
+
+<style scoped>
+.router-link-active {
+  transition: all 0.3s ease;
+}
+
+.router-link-active:hover {
+  transform: translateY(-1px);
+}
+</style>

@@ -23,10 +23,22 @@ const routes: RouteRecordRaw[] = [
       description: 'Browse our delicious menu categories',
     },
   },
+  // {
+  //   path: '/menu',
+  //   name: 'PublicMenu',
+  //   component: () => import('@/views/menu/PublicMenuView.vue'),
+  //   meta: {
+  //     title: 'Our Menu',
+  //     description: 'Explore our full menu',
+  //   },
+  // },
+
+  
+
   {
     path: '/menu',
     name: 'PublicMenu',
-    component: () => import('@/views/menu/PublicMenuView.vue'),
+    component: () => import('@/views/dashboard/MenuItemsView.vue'),
     meta: {
       title: 'Our Menu',
       description: 'Explore our full menu',
@@ -179,68 +191,60 @@ const router = createRouter({
 // ========== NAVIGATION GUARD ==========
 router.beforeEach(
   async (to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
-    // TEMPORARY: For development, disable auth checks
-    if (import.meta.env.DEV) {
-      // Option A: Auto-login with mock data (uncomment if needed)
-      /*
-    if (!localStorage.getItem('access_token')) {
-      localStorage.setItem('access_token', 'dev-mock-token')
-      localStorage.setItem('user', JSON.stringify({
-        id: 1,
-        name: 'Test Restaurant',
-        email: 'abc@gmail.com',
-        business_name: 'Test Restaurant'
-      }))
-    }
-    */
+    console.log('🛡️ Router guard - Navigating from:', from.path, 'to:', to.path)
 
-      // Option B: Bypass auth for now
+    // For development, disabling auth checks ONLY for Menu Items
+    if (import.meta.env.DEV && to.path === '/dashboard/menu-items') {
+      console.log('🚧 DEV MODE: Bypassing auth check for Menu Items page only')
       next()
       return
     }
 
-    // ========== PRODUCTION AUTH LOGIC ==========
+    // All other routes use normal auth logic
     try {
       const { useAuthStore } = await import('@/stores/auth')
       const authStore = useAuthStore()
 
-      // Check authentication status
+      // Checking authentication status
       const isAuthenticated = authStore.isAuthenticated
+      console.log('✅ Auth status for route', to.path, ':', isAuthenticated)
 
       // Routes that require authentication
       if (to.meta.requiresAuth && !isAuthenticated) {
+        console.warn('❌ Auth required but not authenticated for:', to.path)
         next({ name: 'Login' })
         return
       }
 
       // Routes only for guests (login/register when already logged in)
       if (to.meta.guestOnly && isAuthenticated) {
+        console.warn('⚠️ Guest-only route but authenticated for:', to.path)
         next({ name: 'Dashboard' })
         return
       }
 
+      console.log('✅ Navigation allowed to:', to.path)
       next()
     } catch (error) {
-      console.error('Router guard error:', error)
-      // Fallback: allow navigation
+      console.error('❌ Router guard error:', error)
       next()
     }
   },
 )
 
-// ========== UPDATE PAGE TITLE AND META TAGS ==========
+// ========== PAGE TITLE AND META TAGS ==========
 router.afterEach((to: RouteLocationNormalized) => {
-  // Update page title
+  // page title
   const title = to.meta?.title || 'Client Digital Menu'
   const appName = 'Client Digital Menu'
   document.title = `${title} | ${appName}`
 
-  // Update meta description
+  // meta description
   const description =
     to.meta?.description || 'Digital menu application for restaurants, cafes, and hotels'
   updateMetaTag('description', description)
 
-  // You can add more meta tags as needed
+  // meta tags
   updateMetaTag('og:title', title)
   updateMetaTag('og:description', description)
 })

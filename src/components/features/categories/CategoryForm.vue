@@ -109,13 +109,8 @@ interface Props {
   error?: string
 }
 
-// interface Emits {
-//   (e: 'submit', data: CategoryFormData): void
-//   (e: 'cancel'): void
-// }
-
 interface Emits {
-  (e: 'submit', data: CategoryFormData | FormData): void
+  (e: 'submit', data: CategoryFormData): void
   (e: 'cancel'): void
 }
 
@@ -126,15 +121,9 @@ const emit = defineEmits<Emits>()
 const formData = reactive<CategoryFormData>({
   name: props.initialData?.name || '',
   description: props.initialData?.description || '',
-  // image: props.initialData?.image ?? undefined
   image: props.initialData?.image || undefined
 })
 
-// const errors = reactive({
-//   name: ''
-// })
-
-// const errors = reactive<{ name?: string }>({ name: '' })
 const errors = reactive<{ name?: string }>({})
 
 const imagePreview = ref<string>('')
@@ -192,7 +181,7 @@ const validateForm = (): boolean => {
 const handleSubmit = () => {
   if (validateForm()) {
     submitError.value = ''
-    emit('submit', formData) // Now type-safe
+    emit('submit', formData)
   }
 }
 

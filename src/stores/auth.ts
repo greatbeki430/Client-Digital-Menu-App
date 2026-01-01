@@ -1,9 +1,9 @@
-// src/stores/auth.ts
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { User, LoginCredentials, RegisterData, ApiResponse, AuthResponse } from '@/types/auth'
 import router from '@/router'
 import { authUtils } from '@/utils/auth'
+
+import type { User, LoginCredentials, RegisterData, AuthResponse, ApiResponse } from '@/types/auth'
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -15,21 +15,15 @@ export const useAuthStore = defineStore('auth', () => {
   const successMessage = ref('')
 
   // ==================== INITIALIZATION ====================
-  // Initialize from localStorage on store creation
+  // Initialize from localStorage
   const initFromLocalStorage = () => {
     const storedUser = localStorage.getItem('user')
     const storedToken = localStorage.getItem('access_token')
 
     if (storedUser && storedToken) {
       try {
-        // Use authUtils to validate token
-        if (authUtils.validateJWT(storedToken)) {
-          user.value = JSON.parse(storedUser)
-          console.log('✅ User initialized from localStorage')
-        } else {
-          console.log('❌ Token invalid/expired, clearing storage')
-          clearStorage()
-        }
+        user.value = JSON.parse(storedUser)
+        console.log('✅ User initialized from localStorage:', user.value?.name)
       } catch (e) {
         console.error('Failed to parse stored user:', e)
         clearStorage()
@@ -47,14 +41,15 @@ export const useAuthStore = defineStore('auth', () => {
   initFromLocalStorage()
 
   // ==================== GETTERS ====================
-  const isAuthenticated = computed(() => authUtils.isAuthenticated())
+  const isAuthenticated = computed(() => {
+    const token = authUtils.getToken()
+    const hasUser = !!user.value
+    console.log('isAuthenticated check:', { token: !!token, hasUser })
+    return !!token && hasUser
+  })
+
   const userName = computed(() => user.value?.name || '')
   const businessName = computed(() => user.value?.business_name || '')
-
-  // Initialize from localStorage
-  const initFromStorage = (): void => {
-    initFromLocalStorage()
-  }
 
   // ==================== ACTIONS ====================
   async function register(data: RegisterData): Promise<ApiResponse<AuthResponse>> {
@@ -251,6 +246,15 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = testUser
         authUtils.setAuthData(mockToken, testUser)
 
+        // Save to mock users list if not exists
+        const existing = localStorage.getItem('mock_users')
+        const users = existing ? JSON.parse(existing) : []
+        const userExists = users.some((u: User) => u.email === testUser.email)
+        if (!userExists) {
+          users.push(testUser)
+          localStorage.setItem('mock_users', JSON.stringify(users))
+        }
+
         const successResponse: ApiResponse<AuthResponse> = {
           success: true,
           data: mockAuthResponse,
@@ -367,8 +371,7 @@ export const useAuthStore = defineStore('auth', () => {
       const storedUser = localStorage.getItem('user')
       const storedToken = localStorage.getItem('access_token')
 
-      // Use authUtils to validate token
-      if (storedUser && storedToken && authUtils.validateJWT(storedToken)) {
+      if (storedUser && storedToken) {
         user.value = JSON.parse(storedUser)
       } else {
         clearStorage()
@@ -395,7 +398,9 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // Initialize on store creation
-  initFromStorage()
+  const initFromStorage = () => {
+    initFromLocalStorage()
+  }
 
   return {
     // State

@@ -1,5 +1,18 @@
 <template>
-  <div class="container mx-auto px-4 py-8">
+  <div v-if="isLoading" class="container mx-auto px-4 py-8">
+    <div class="text-center py-12">
+      <svg class="animate-spin h-12 w-12 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none"
+        viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+        </path>
+      </svg>
+      <p class="mt-4 text-gray-600">Loading dashboard...</p>
+    </div>
+  </div>
+
+  <div v-else class="container mx-auto px-4 py-8">
     <!-- Welcome Section -->
     <div class="mb-8">
       <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
@@ -89,7 +102,7 @@
     <div class="mb-8">
       <h2 class="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Add Category -->
+        <!--Category -->
         <router-link to="/dashboard/categories/create"
           class="flex items-center p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
           <div class="p-2 bg-blue-100 rounded-lg mr-4">
@@ -103,7 +116,7 @@
           </div>
         </router-link>
 
-        <!-- Add Menu Item -->
+        <!-- Menu Item -->
         <router-link to="/dashboard/menu-items/create"
           class="flex items-center p-4 bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200">
           <div class="p-2 bg-green-100 rounded-lg mr-4">
@@ -196,8 +209,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { authUtils } from '@/utils/auth'
 
-
-// Component-level variable for interval - FIXED: Use number instead of NodeJS.Timeout
+// Component-level variable for interval
 let tokenCheckInterval: number | null = null
 
 // Loading state
@@ -235,58 +247,41 @@ onMounted(async () => {
   console.log('=== DASHBOARD MOUNTED ===')
 
   try {
-    // Step 1: Use authUtils to validate authentication
-    const token = authUtils.getToken()
-    console.log('🔑 Token from authUtils:', token ? 'Exists' : 'Missing')
+    // Step 1: Check if user is authenticated
+    if (!authStore.isAuthenticated) {
+      console.warn('❌ User not authenticated in auth store')
+      await handleUnauthenticated()
+      return
+    }
 
+    // Step 2: Verify token exists
+    const token = authUtils.getToken()
     if (!token) {
       console.warn('❌ No access token found')
       await handleUnauthenticated()
       return
     }
 
-    // Step 2: Use authUtils to validate JWT
-    if (!authUtils.validateJWT(token)) {
-      console.warn('❌ JWT token validation failed')
-      await handleUnauthenticated()
-      return
-    }
-
-    // Step 3: Use authUtils to validate and sync auth store
-    if (!authUtils.validateAuth(authStore)) {
-      console.warn('❌ Auth store validation failed')
-      await handleUnauthenticated()
-      return
-    }
-
-    console.log('✅ Authentication successful (via authUtils):', {
+    console.log('✅ Authentication successful:', {
       user: authStore.user?.name,
       business: authStore.user?.business_name,
-      isAuthenticated: authStore.isAuthenticated
+      tokenExists: !!token
     })
 
-    // Step 4: Set up periodic token check (every 30 seconds)
+    // Step 3: Set up periodic auth check (every 30 seconds)
     tokenCheckInterval = window.setInterval(() => {
       const currentToken = authUtils.getToken()
-      if (!currentToken || !authUtils.validateJWT(currentToken)) {
-        console.warn('⚠️ Token validation failed during periodic check')
+      if (!currentToken) {
+        console.warn('⚠️ Token missing during periodic check')
         handleUnauthenticated()
       }
     }, 30000)
 
-    // Step 5: Set a timeout to detect if navigation happens
-    const navigationCheck = setTimeout(() => {
-      console.log('✅ Dashboard still visible after 2 seconds - authentication successful')
-    }, 2000)
-
-    // Step 6: Load dashboard data
+    // Step 4: Load dashboard data
     await loadDashboardData()
 
-    // Step 7: Clear loading state
+    // Step 5: Clear loading state
     isLoading.value = false
-
-    // Clean up navigation check
-    clearTimeout(navigationCheck)
 
     console.log('🎉 Dashboard fully loaded and ready!')
 
@@ -314,11 +309,13 @@ async function handleUnauthenticated() {
     tokenCheckInterval = null
   }
 
-  localStorage.removeItem('access_token')
-  localStorage.removeItem('user')
+  // Clear auth data
+  authUtils.clearAuthData()
 
+  // Clear auth store
   authStore.user = null
 
+  // Redirect to login
   router.push('/login')
 }
 
@@ -369,6 +366,7 @@ async function loadDashboardData() {
   }
 }
 
+
 const formatTime = (timestamp: string): string => {
   const now = new Date()
   const activityTime = new Date(timestamp)
@@ -384,3 +382,23 @@ const formatTime = (timestamp: string): string => {
   }
 }
 </script>
+
+<style scoped>
+/* Custom styles for dashboard */
+.bg-white.rounded-lg.shadow {
+  transition: all 0.3s ease;
+}
+
+.bg-white.rounded-lg.shadow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.router-link-active {
+  transition: all 0.3s ease;
+}
+
+.router-link-active:hover {
+  transform: translateY(-2px);
+}
+</style>

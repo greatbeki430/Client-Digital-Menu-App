@@ -7,7 +7,8 @@ import type {
   MenuItemFormData,
 } from '@/types/menuItem'
 import type { ApiResponse } from '@/types/auth'
-import menuItemService from '@/services/menuItemService'
+// import menuItemService from '@/services/menuItemService'
+import menuItemService from '@/services/theMealDbMenuItemService'
 
 export const useMenuItemStore = defineStore('menuItem', () => {
   // State

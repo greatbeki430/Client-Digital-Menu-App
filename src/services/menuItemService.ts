@@ -55,7 +55,7 @@ class MenuItemService {
         const formData = new FormData()
         formData.append('item_name', data.item_name)
         formData.append('category_id', data.category_id.toString())
-        formData.append('business_id', data.business_id?.toString() || '') // Add business_id
+        formData.append('business_id', data.business_id?.toString() || '') 
         formData.append('price', data.price.toString())
         formData.append('tax_percentage', data.tax_percentage.toString())
         if (data.discount) formData.append('discount', data.discount.toString())

@@ -1,6 +1,10 @@
 import type { Category, PaginatedResponse } from './category'
 
 export interface MenuItem {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  description: any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tags: any
   id: number
   item_name: string
   category_id: number

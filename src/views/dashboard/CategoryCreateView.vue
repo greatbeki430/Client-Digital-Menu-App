@@ -1,7 +1,6 @@
 <template>
   <div class="container mx-auto px-4 py-8">
     <div class="max-w-3xl mx-auto">
-      <!-- Breadcrumb - Fixed with /dashboard prefix -->
       <nav class="mb-6" aria-label="Breadcrumb">
         <ol class="flex items-center space-x-2">
           <li>
@@ -236,7 +235,6 @@ const errors = reactive<Errors>({
 
 const imagePreview = ref<string>('')
 const submitError = ref<string>('')
-// const loading = ref(false)
 
 onMounted(() => {
   // Ensure user is authenticated
@@ -365,7 +363,6 @@ const handleSubmit = async (): Promise<void> => {
       formData.append('photo', form.photo)
     }
 
-    // Add business_id from auth store
     if (authStore.user?.id) {
       formData.append('business_id', authStore.user.id.toString())
     }
@@ -422,11 +419,9 @@ function isApiError(error: unknown): error is ApiError {
 const handleCancel = (): void => {
   if (form.name || form.description) {
     if (confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
-      // Fixed: Redirect to /dashboard/categories
       router.push('/dashboard/categories')
     }
   } else {
-    // Fixed: Redirect to /dashboard/categories
     router.push('/dashboard/categories')
   }
 }

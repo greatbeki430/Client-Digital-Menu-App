@@ -64,7 +64,6 @@ onMounted(async () => {
     }
 
 
-    // TODO: Replace with actual API call
     // await categoryStore.fetchCategory(categoryId)
     // categoryData.value = categoryStore.currentCategory
 

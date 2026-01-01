@@ -132,7 +132,7 @@ const startAutoDismiss = () => {
   // Clear any existing intervals
   stopAutoDismiss()
 
-  const totalSteps = props.autoCloseDelay / 100 // Update every 100ms
+  const totalSteps = props.autoCloseDelay / 100 // Updates every 100ms
   const progressStep = 100 / totalSteps
 
   // Progress bar interval

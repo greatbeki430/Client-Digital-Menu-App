@@ -79,7 +79,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useCategoryStore } from '@/stores/category'
-import type { Category } from '@/types/category' // Import the Category type
+import type { Category } from '@/types/category' 
 
 const route = useRoute()
 const categoryStore = useCategoryStore()
