@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import type { MenuItem, MenuItemsResponse, MenuItemFormData } from '@/types/menuItem'
 import type { ApiResponse } from '@/types/auth'
-import type { Category, PaginatedResponse } from '@/types/category'
+import type { Category } from '@/types/category'
 // import type { PaginationLink } from '@/types/menuItem'
 
 // Interface definitions for external APIs
