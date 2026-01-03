@@ -622,7 +622,7 @@ class TheMealDBMenuItemService {
     }
   }
 
-  async create(data: MenuItemFormData | FormData): Promise<ApiResponse<MenuItem>> {
+  async create(_data: MenuItemFormData | FormData): Promise<ApiResponse<MenuItem>> {
     // Simulate processing delay
     await new Promise((resolve) => setTimeout(resolve, 500))
 
@@ -634,7 +634,7 @@ class TheMealDBMenuItemService {
     return errorResponse
   }
 
-  async update(id: number, data: MenuItemFormData | FormData): Promise<ApiResponse<MenuItem>> {
+  async update(_id: number, _data: MenuItemFormData | FormData): Promise<ApiResponse<MenuItem>> {
     await new Promise((resolve) => setTimeout(resolve, 500))
 
     const errorResponse: ApiResponse<MenuItem> = {
@@ -645,7 +645,7 @@ class TheMealDBMenuItemService {
     return errorResponse
   }
 
-  async delete(id: number): Promise<ApiResponse<void>> {
+  async delete(_id: number): Promise<ApiResponse<void>> {
     await new Promise((resolve) => setTimeout(resolve, 500))
 
     const errorResponse: ApiResponse<void> = {
