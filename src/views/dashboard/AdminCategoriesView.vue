@@ -89,7 +89,8 @@
 import { ref, onMounted } from 'vue'
 import { useCategoryStore } from '@/stores/category'
 import BaseButton from '@/components/ui/BaseButton.vue'
-import ErrorModal from '@/components/modals/ErrorModal.vue'
+// Fixed import path
+import ErrorModal from '@/components/ui/ErrorModal.vue'
 
 const categoryStore = useCategoryStore()
 const deletingId = ref<number | null>(null)
