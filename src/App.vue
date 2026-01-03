@@ -1,27 +1,20 @@
 <template>
-  <div id="app" class="min-h-screen bg-gray-50 flex flex-col">
-    <!-- Header -->
-    <AppHeader />
-
-    <!-- Main content -->
-    <main class="flex-grow">
-      <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
-          <component :is="Component" />
-        </transition>
-      </router-view>
-    </main>
-
-    <!-- Footer -->
-    <AppFooter />
-  </div>
+  <router-view v-slot="{ Component, route }">
+    <transition name="fade" mode="out-in">
+      <!-- IMPORTANT: Fixed the logic - it was backwards -->
+      <component :is="Component" v-if="route.meta?.hideLayout" />
+      <AppLayout v-else>
+        <component :is="Component" />
+      </AppLayout>
+    </transition>
+  </router-view>
 </template>
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import AppHeader from '@/components/layout/AppHeader.vue'
-import AppFooter from '@/components/layout/AppFooter.vue'
+// Correct import path for your AppLayout
+import AppLayout from '@/components/layout/AppLayout.vue'
 
 const authStore = useAuthStore()
 

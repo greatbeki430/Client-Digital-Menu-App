@@ -1,3 +1,4 @@
+
 import type { Category, CategoryFormData, CategoriesResponse } from '@/types/category'
 import type { ApiResponse } from '@/types/auth'
 
@@ -52,7 +53,7 @@ class CategoryService {
           },
         },
       }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error: unknown) {
       return {
         success: false,
@@ -91,7 +92,15 @@ class CategoryService {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async delete(_id: number): Promise<ApiResponse<void>> {
     await new Promise((resolve) => setTimeout(resolve, 500))
-    return { success: false, message: 'Mock mode - delete not implemented' }
+    return {
+      success: false,
+      message: 'Mock Mode: Delete functionality is not implemented',
+      errors: {
+        demo: [
+          'This is a demo application. In a real application, this would delete the category from the database.',
+        ],
+      },
+    }
   }
 }
 

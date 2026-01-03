@@ -33,8 +33,6 @@ const routes: RouteRecordRaw[] = [
   //   },
   // },
 
-  
-
   {
     path: '/menu',
     name: 'PublicMenu',
@@ -159,6 +157,35 @@ const routes: RouteRecordRaw[] = [
       description: 'View category details and items',
     },
     props: true,
+  },
+
+  // ========== LEGAL & SUPPORT ROUTES ==========
+  {
+    path: '/privacy',
+    name: 'PrivacyPolicy',
+    component: () => import('@/views/PrivacyPolicy.vue'),
+    meta: {
+      title: 'Privacy Policy',
+      description: 'Privacy policy for Digital Menu application',
+    },
+  },
+  {
+    path: '/terms',
+    name: 'TermsOfService',
+    component: () => import('@/views/TermsOfService.vue'),
+    meta: {
+      title: 'Terms of Service',
+      description: 'Terms of service for Digital Menu application',
+    },
+  },
+  {
+    path: '/contact',
+    name: 'ContactUs',
+    component: () => import('@/views/ContactUs.vue'),
+    meta: {
+      title: 'Contact Us',
+      description: 'Contact Digital Menu support team',
+    },
   },
 
   // ========== 404 NOT FOUND ==========

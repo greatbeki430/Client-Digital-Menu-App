@@ -41,6 +41,7 @@ defineEmits<{
 const buttonClasses = computed(() => {
   const base = [
     'btn',
+    'inline-flex items-center justify-center',
     props.fullWidth ? 'w-full' : '',
     props.disabled || props.loading ? 'opacity-50 cursor-not-allowed' : ''
   ]

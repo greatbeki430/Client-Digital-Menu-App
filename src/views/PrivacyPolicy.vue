@@ -1,27 +1,5 @@
 <template>
   <div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <div class="bg-white shadow">
-      <div class="container mx-auto px-4 py-6">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-3">
-            <router-link to="/" class="flex items-center space-x-2 text-gray-700 hover:text-gray-900">
-              <div class="w-8 h-8 bg-gray-900 rounded flex items-center justify-center">
-                <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                </svg>
-              </div>
-              <span class="text-xl font-bold">Digital Menu</span>
-            </router-link>
-          </div>
-          <router-link to="/" class="text-blue-600 hover:text-blue-800 font-medium">
-            ← Back to Home
-          </router-link>
-        </div>
-      </div>
-    </div>
-
     <!-- Content -->
     <div class="container mx-auto px-4 py-12">
       <div class="max-w-4xl mx-auto">
@@ -129,8 +107,8 @@
               </p>
               <div class="mt-4 p-4 bg-gray-50 rounded-lg">
                 <p class="text-gray-700"><strong>Email:</strong> privacy@digitalmenu.com</p>
-                <p class="text-gray-700"><strong>Address:</strong> 123 Tech Street, Digital City, DC 10001</p>
-                <p class="text-gray-700"><strong>Phone:</strong> +1 (555) 123-4567</p>
+                <p class="text-gray-700"><strong>Address:</strong> 123 Tech Street, Digital City, Addis 10001</p>
+                <p class="text-gray-700"><strong>Phone:</strong> (+251) 961 305 788</p>
               </div>
             </section>
 
