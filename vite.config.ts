@@ -11,7 +11,6 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-  // ADD THIS SERVER CONFIGURATION
   server: {
     proxy: {
       '/api': {
@@ -19,7 +18,6 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
         rewrite: (path) => path.replace(/^\/api/, '/api'),
-        // Optional: Add headers if needed
         headers: {
           Origin: 'https://vuefront.mebrejderma.com',
         },
