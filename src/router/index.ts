@@ -45,7 +45,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/categories',
     name: 'PublicCategories',
-    component: () => import('@/views/menu/CategoriesView.vue'),
+    component: () => import('@/views/menu/PublicCategoriesView.vue'),
     meta: {
       title: 'Menu Categories',
       description: 'View all menu categories',
@@ -88,7 +88,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/dashboard/categories',
     name: 'DashboardCategories',
-    component: () => import('@/views/dashboard/CategoriesView.vue'),
+    component: () => import('@/views/dashboard/AdminCategoriesView.vue'),
     meta: {
       title: 'Manage Categories',
       requiresAuth: true,
